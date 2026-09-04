@@ -1,0 +1,1 @@
+{"version":3,"file":"ScrollFeatures.d.ts","sourceRoot":"","sources":["../../src/features/ScrollFeatures.ts"],"names":[],"mappings":"AAAA;;;;GAIG;AAEH,OAAO,KAAK,EAAE,YAAY,EAAE,MAAM,+BAA+B,CAAC;AAClE,OAAO,KAAK,EAAE,cAAc,EAAE,MAAM,gBAAgB,CAAC;AAGrD,qBAAa,sBAAsB;WACnB,OAAO,CAAC,OAAO,EAAE,YAAY,EAAE,GAAG,cAAc;CAmC/D"}

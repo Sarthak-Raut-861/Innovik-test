@@ -1,0 +1,15 @@
+{
+  "name": "trustpulse-monorepo",
+  "version": "1.0.0",
+  "private": true,
+  "description": "TrustPulse AI Continuous Session Security Platform",
+  "workspaces": [
+    "sdk"
+  ],
+  "scripts": {
+    "build:sdk": "npm --prefix sdk run build",
+    "test:sdk": "npm --prefix sdk test",
+    "typecheck": "npm --prefix sdk run typecheck",
+    "start:example": "node example/mock-server.js"
+  }
+}

@@ -1,0 +1,1 @@
+{"version":3,"file":"MouseFeatures.d.ts","sourceRoot":"","sources":["../../src/features/MouseFeatures.ts"],"names":[],"mappings":"AAAA;;;;;GAKG;AAEH,OAAO,KAAK,EAAE,gBAAgB,EAAE,MAAM,8BAA8B,CAAC;AACrE,OAAO,KAAK,EAAE,aAAa,EAAE,MAAM,gBAAgB,CAAC;AAGpD,qBAAa,qBAAqB;WAClB,OAAO,CAAC,OAAO,EAAE,gBAAgB,EAAE,GAAG,aAAa;CAsElE"}

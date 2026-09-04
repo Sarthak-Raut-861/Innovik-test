@@ -1,0 +1,1 @@
+{"version":3,"file":"Integrity.d.ts","sourceRoot":"","sources":["../../src/security/Integrity.ts"],"names":[],"mappings":"AAAA;;;;;;;;;;GAUG;AAEH,qBAAa,gBAAgB;IAC3B;;OAEG;WACW,eAAe,CAAC,IAAI,EAAE,MAAM,GAAG,MAAM;IASnD;;OAEG;WACiB,aAAa,CAAC,IAAI,EAAE,MAAM,GAAG,OAAO,CAAC,MAAM,CAAC;CAajE"}

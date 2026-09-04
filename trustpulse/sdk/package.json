@@ -1,0 +1,33 @@
+{
+  "name": "@trustpulse/sdk",
+  "version": "1.0.0",
+  "description": "Production-grade continuous session security telemetry SDK for web applications",
+  "author": "TrustPulse AI",
+  "license": "Apache-2.0",
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "typecheck": "tsc --noEmit"
+  },
+  "keywords": [
+    "cybersecurity",
+    "continuous-authentication",
+    "behavioral-biometrics",
+    "session-security",
+    "telemetry",
+    "zero-trust"
+  ],
+  "devDependencies": {
+    "happy-dom": "^17.1.8",
+    "typescript": "^5.7.3",
+    "vitest": "^3.0.7"
+  }
+}

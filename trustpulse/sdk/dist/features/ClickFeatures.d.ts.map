@@ -1,0 +1,1 @@
+{"version":3,"file":"ClickFeatures.d.ts","sourceRoot":"","sources":["../../src/features/ClickFeatures.ts"],"names":[],"mappings":"AAAA;;;;GAIG;AAEH,OAAO,KAAK,EAAE,WAAW,EAAE,MAAM,8BAA8B,CAAC;AAChE,OAAO,KAAK,EAAE,aAAa,EAAE,MAAM,gBAAgB,CAAC;AAGpD,qBAAa,qBAAqB;WAClB,OAAO,CAAC,OAAO,EAAE,WAAW,EAAE,EAAE,gBAAgB,SAAO,GAAG,aAAa;CA4BtF"}

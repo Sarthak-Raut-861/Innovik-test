@@ -1,0 +1,1 @@
+{"version":3,"file":"BaseCollector.d.ts","sourceRoot":"","sources":["../../src/collectors/BaseCollector.ts"],"names":[],"mappings":"AAAA;;;;;GAKG;AAEH,8BAAsB,aAAa;IACjC,SAAS,CAAC,MAAM,UAAS;IACzB,SAAS,CAAC,MAAM,UAAS;aAET,KAAK,IAAI,IAAI;aACb,IAAI,IAAI,IAAI;aACZ,KAAK,IAAI,IAAI;IAEtB,KAAK,IAAI,IAAI;IAIb,MAAM,IAAI,IAAI;IAId,QAAQ,IAAI,OAAO;CAG3B"}

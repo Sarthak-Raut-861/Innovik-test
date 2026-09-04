@@ -1,0 +1,1 @@
+{"version":3,"file":"TouchFeatures.d.ts","sourceRoot":"","sources":["../../src/features/TouchFeatures.ts"],"names":[],"mappings":"AAAA;;;;GAIG;AAEH,OAAO,KAAK,EAAE,kBAAkB,EAAE,MAAM,8BAA8B,CAAC;AACvE,OAAO,KAAK,EAAE,aAAa,EAAE,MAAM,gBAAgB,CAAC;AAGpD,qBAAa,qBAAqB;WAClB,OAAO,CAAC,OAAO,EAAE,kBAAkB,EAAE,GAAG,aAAa;CAyBpE"}
