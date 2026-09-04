@@ -2,9 +2,11 @@
 TrustPulse AI - Immutable Audit Log Repository
 """
 
-from typing import Optional, List, Dict, Any
+from typing import Any, Dict, List, Optional
+
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+
 from app.models.audit_log import AuditLogModel
 from app.models.base import utc_now
 

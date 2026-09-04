@@ -1,9 +1,11 @@
 [project]
 name = "trustpulse-backend"
-version = "1.0.0"
+version = "2.0.0"
 description = "TrustPulse AI Continuous Session Security Platform Backend"
 readme = "README.md"
-requires-python = ">=3.12"
+# Production deployment targets Python 3.12+. The lower bound keeps local sandbox
+# and CI on Python 3.11 working without changing language features used by the app.
+requires-python = ">=3.11"
 dependencies = [
     "fastapi>=0.115.0",
     "uvicorn[standard]>=0.32.0",
@@ -15,6 +17,14 @@ dependencies = [
     "aiosqlite>=0.20.0",
     "redis>=5.2.0",
     "httpx>=0.28.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.3.0",
+    "pytest-asyncio>=0.24.0",
+    "ruff>=0.8.0",
+    "mypy>=1.13.0",
 ]
 
 [tool.pytest.ini_options]
@@ -32,3 +42,10 @@ target-version = "py312"
 [tool.ruff.lint]
 select = ["E", "F", "I", "B"]
 ignore = ["B008"]
+
+[tool.mypy]
+python_version = "3.12"
+plugins = ["pydantic.mypy"]
+ignore_missing_imports = true
+check_untyped_defs = true
+warn_unused_ignores = true

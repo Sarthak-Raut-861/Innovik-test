@@ -4,8 +4,10 @@ TrustPulse AI - Session Model
 
 from datetime import datetime
 from typing import Optional
-from sqlalchemy import String, DateTime, Integer, Index
+
+from sqlalchemy import DateTime, Index, Integer, String
 from sqlalchemy.orm import Mapped, mapped_column
+
 from app.models.base import Base, generate_uuid, utc_now
 
 
@@ -18,9 +20,15 @@ class SessionModel(Base):
     subject_id: Mapped[Optional[str]] = mapped_column(String(128), nullable=True)
     device_id: Mapped[Optional[str]] = mapped_column(String(128), nullable=True)
     sdk_instance_id: Mapped[Optional[str]] = mapped_column(String(64), nullable=True)
-    status: Mapped[str] = mapped_column(String(32), default="ACTIVE", nullable=False)  # ACTIVE, PAUSED, TERMINATED, ISOLATED
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now, nullable=False)
-    last_seen_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now, nullable=False)
+    status: Mapped[str] = mapped_column(
+        String(32), default="ACTIVE", nullable=False
+    )  # ACTIVE, PAUSED, TERMINATED, ISOLATED
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=utc_now, nullable=False
+    )
+    last_seen_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=utc_now, nullable=False
+    )
     expires_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
     session_version: Mapped[int] = mapped_column(Integer, default=1, nullable=False)
 

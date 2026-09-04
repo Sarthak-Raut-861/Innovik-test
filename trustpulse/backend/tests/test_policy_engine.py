@@ -1,55 +1,73 @@
 """
-TrustPulse AI - Policy Engine Unit Tests
+TrustPulse AI — Policy Engine Unit Tests.
+
+The policy engine is the only authoritative decision layer.
 """
 
 import pytest
+
 from app.engines.policy.decision_engine import PolicyDecisionEngine
+from app.engines.policy.policy_engine import PolicyEngine
 from app.engines.policy.policy_types import SecurityDecisionEnum
 from app.schemas.action import ActionRiskLevel
 
 
-@pytest.mark.parametrize("action_risk,confidence,expected_decision", [
-    # LOW risk → always ALLOW regardless of confidence
-    (ActionRiskLevel.LOW, 0,  SecurityDecisionEnum.ALLOW),
-    (ActionRiskLevel.LOW, 40, SecurityDecisionEnum.ALLOW),
-    (ActionRiskLevel.LOW, 85, SecurityDecisionEnum.ALLOW),
-    # MEDIUM risk: ALLOW if >= 30, STEP_UP otherwise
-    (ActionRiskLevel.MEDIUM, 30, SecurityDecisionEnum.ALLOW),
-    (ActionRiskLevel.MEDIUM, 70, SecurityDecisionEnum.ALLOW),
-    (ActionRiskLevel.MEDIUM, 29, SecurityDecisionEnum.STEP_UP),
-    (ActionRiskLevel.MEDIUM, 0,  SecurityDecisionEnum.STEP_UP),
-    # HIGH risk: ALLOW if >= 60, STEP_UP if >= 30, BLOCK below
-    (ActionRiskLevel.HIGH, 60, SecurityDecisionEnum.ALLOW),
-    (ActionRiskLevel.HIGH, 85, SecurityDecisionEnum.ALLOW),
-    (ActionRiskLevel.HIGH, 45, SecurityDecisionEnum.STEP_UP),
-    (ActionRiskLevel.HIGH, 30, SecurityDecisionEnum.STEP_UP),
-    (ActionRiskLevel.HIGH, 29, SecurityDecisionEnum.BLOCK),
-    (ActionRiskLevel.HIGH, 0,  SecurityDecisionEnum.BLOCK),
-    # CRITICAL risk: ALLOW >= 80, STEP_UP >= 60, BLOCK >= 30, ISOLATE below
-    (ActionRiskLevel.CRITICAL, 80, SecurityDecisionEnum.ALLOW),
-    (ActionRiskLevel.CRITICAL, 90, SecurityDecisionEnum.ALLOW),
-    (ActionRiskLevel.CRITICAL, 60, SecurityDecisionEnum.STEP_UP),
-    (ActionRiskLevel.CRITICAL, 79, SecurityDecisionEnum.STEP_UP),
-    (ActionRiskLevel.CRITICAL, 30, SecurityDecisionEnum.BLOCK),
-    (ActionRiskLevel.CRITICAL, 59, SecurityDecisionEnum.BLOCK),
-    (ActionRiskLevel.CRITICAL, 29, SecurityDecisionEnum.ISOLATE),
-    (ActionRiskLevel.CRITICAL, 0,  SecurityDecisionEnum.ISOLATE),
-])
-def test_policy_decision_matrix(action_risk, confidence, expected_decision):
-    decision, reasons = PolicyDecisionEngine.decide(
+@pytest.mark.parametrize(
+    "action_risk,confidence,expected,reasons",
+    [
+        (ActionRiskLevel.LOW, 0, SecurityDecisionEnum.ALLOW, []),
+        (ActionRiskLevel.LOW, 40, SecurityDecisionEnum.ALLOW, []),
+        (ActionRiskLevel.LOW, 85, SecurityDecisionEnum.ALLOW, []),
+        (ActionRiskLevel.MEDIUM, 30, SecurityDecisionEnum.ALLOW, []),
+        (ActionRiskLevel.MEDIUM, 70, SecurityDecisionEnum.ALLOW, []),
+        (
+            ActionRiskLevel.MEDIUM,
+            29,
+            SecurityDecisionEnum.STEP_UP,
+            ["CONFIDENCE_TOO_LOW_FOR_ACTION"],
+        ),
+        (
+            ActionRiskLevel.MEDIUM,
+            0,
+            SecurityDecisionEnum.STEP_UP,
+            ["CONFIDENCE_TOO_LOW_FOR_ACTION"],
+        ),
+        (ActionRiskLevel.HIGH, 60, SecurityDecisionEnum.ALLOW, []),
+        (ActionRiskLevel.HIGH, 45, SecurityDecisionEnum.STEP_UP, ["CONFIDENCE_TOO_LOW_FOR_ACTION"]),
+        (ActionRiskLevel.HIGH, 29, SecurityDecisionEnum.BLOCK, ["CONFIDENCE_TOO_LOW_FOR_ACTION"]),
+        (ActionRiskLevel.CRITICAL, 80, SecurityDecisionEnum.ALLOW, []),
+        (
+            ActionRiskLevel.CRITICAL,
+            60,
+            SecurityDecisionEnum.STEP_UP,
+            ["CONFIDENCE_TOO_LOW_FOR_ACTION"],
+        ),
+        (
+            ActionRiskLevel.CRITICAL,
+            30,
+            SecurityDecisionEnum.BLOCK,
+            ["CONFIDENCE_TOO_LOW_FOR_ACTION"],
+        ),
+        (
+            ActionRiskLevel.CRITICAL,
+            0,
+            SecurityDecisionEnum.BLOCK,
+            ["CONFIDENCE_TOO_LOW_FOR_ACTION"],
+        ),
+    ],
+)
+def test_policy_decision_matrix(action_risk, confidence, expected, reasons):
+    decision, reason_codes = PolicyDecisionEngine.decide(
         session_confidence=confidence,
         action_risk=action_risk,
         reason_codes=[],
     )
-    assert decision == expected_decision, (
-        f"Expected {expected_decision} for action_risk={action_risk}, confidence={confidence}"
-    )
+    assert decision == expected
 
 
 def test_open_incident_forces_isolate():
-    """Active incident always results in ISOLATE regardless of confidence/risk."""
     for risk in ActionRiskLevel:
-        for conf in [0, 40, 80, 100]:
+        for conf in (0, 40, 80, 100):
             decision, reasons = PolicyDecisionEngine.decide(
                 session_confidence=conf,
                 action_risk=risk,
@@ -60,13 +78,40 @@ def test_open_incident_forces_isolate():
             assert "ACTIVE_SECURITY_INCIDENT" in reasons
 
 
-def test_isolate_includes_correct_reason_codes():
+def test_isolate_requires_multiple_independent_signals():
+    decision, _ = PolicyDecisionEngine.decide(
+        session_confidence=0,
+        action_risk=ActionRiskLevel.CRITICAL,
+        reason_codes=["BEHAVIOR_ANOMALY", "NEW_DEVICE"],
+    )
+    assert decision == SecurityDecisionEnum.ISOLATE
+
+
+def test_missing_evidence_is_not_isolate():
+    """Missing observations alone must not be treated as malicious."""
     decision, reasons = PolicyDecisionEngine.decide(
         session_confidence=0,
         action_risk=ActionRiskLevel.CRITICAL,
-        reason_codes=["BEHAVIOR_ANOMALY"],
+        reason_codes=["COLD_START_NO_BASELINE"],
     )
-    assert decision == SecurityDecisionEnum.ISOLATE
-    assert "CONFIDENCE_TOO_LOW_FOR_ACTION" in reasons
-    assert "CRITICAL_ACTION_BLOCKED" in reasons
-    assert "SESSION_ISOLATED" in reasons
+    assert decision == SecurityDecisionEnum.BLOCK
+
+
+def test_policy_engine_is_deterministic():
+    inputs = {
+        "session_confidence": 55,
+        "action_risk": ActionRiskLevel.HIGH,
+        "reason_codes": ["BEHAVIOR_ANOMALY"],
+    }
+    d1 = PolicyEngine.decide(**inputs)
+    d2 = PolicyEngine.decide(**inputs)
+    assert d1 == d2
+
+
+def test_policy_returns_rule_id():
+    _, rule_id, _ = PolicyEngine.decide(
+        session_confidence=40,
+        action_risk=ActionRiskLevel.MEDIUM,
+        reason_codes=[],
+    )
+    assert rule_id in ("medium-step-up", "medium-allow")

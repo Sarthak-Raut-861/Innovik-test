@@ -1,13 +1,15 @@
 """
-TrustPulse AI - Telemetry Repository
+TrustPulse AI — Telemetry Repository.
 """
 
-from typing import Optional, List, Dict, Any
-from sqlalchemy import select
+from typing import Any, Dict, List, Optional
+
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.models.base import utc_now
 from app.models.telemetry import TelemetryEventModel
 from app.repositories.base import BaseRepository
-from app.models.base import utc_now
 
 
 class TelemetryRepository(BaseRepository[TelemetryEventModel]):
@@ -32,6 +34,7 @@ class TelemetryRepository(BaseRepository[TelemetryEventModel]):
         schema_version: str,
         feature_payload: Dict[str, Any],
         validation_status: str = "VALID",
+        rejection_reason: Optional[str] = None,
     ) -> TelemetryEventModel:
         model = TelemetryEventModel(
             event_id=event_id,
@@ -44,12 +47,15 @@ class TelemetryRepository(BaseRepository[TelemetryEventModel]):
             feature_payload=feature_payload,
             received_at=utc_now(),
             validation_status=validation_status,
+            rejection_reason=rejection_reason,
         )
         self.session.add(model)
         await self.session.flush()
         return model
 
-    async def get_session_events(self, session_id: str, limit: int = 100) -> List[TelemetryEventModel]:
+    async def get_session_events(
+        self, session_id: str, limit: int = 100
+    ) -> List[TelemetryEventModel]:
         stmt = (
             select(TelemetryEventModel)
             .where(
@@ -61,3 +67,11 @@ class TelemetryRepository(BaseRepository[TelemetryEventModel]):
         )
         result = await self.session.execute(stmt)
         return list(result.scalars().all())
+
+    async def count_session_events(self, session_id: str) -> int:
+        stmt = select(func.count(TelemetryEventModel.id)).where(
+            TelemetryEventModel.session_id == session_id,
+            TelemetryEventModel.customer_tenant_id == self.tenant_id,
+        )
+        result = await self.session.execute(stmt)
+        return int(result.scalar() or 0)

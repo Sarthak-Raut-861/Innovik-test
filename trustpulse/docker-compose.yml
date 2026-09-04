@@ -1,7 +1,73 @@
-version: "3.8"
+version: "3.9"
 
 services:
-  # Reference Mock Ingestion Service & Test Harness
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: trustpulse
+      POSTGRES_PASSWORD: ${TRUSTPULSE_DB_PASSWORD:-change_me_in_env}
+      POSTGRES_DB: trustpulse
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U trustpulse -d trustpulse"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    command: ["redis-server", "--requirepass", "${TRUSTPULSE_REDIS_PASSWORD:-change_me_redis_env}", "--appendonly", "yes"]
+    ports:
+      - "6379:6379"
+    volumes:
+      - redisdata:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "${TRUSTPULSE_REDIS_PASSWORD:-change_me_redis_env}", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  backend:
+    build:
+      context: ./backend
+    ports:
+      - "8000:8000"
+    environment:
+      DATABASE_URL: postgresql+asyncpg://trustpulse:${TRUSTPULSE_DB_PASSWORD:-change_me_in_env}@postgres:5432/trustpulse
+      REDIS_URL: redis://:${TRUSTPULSE_REDIS_PASSWORD:-change_me_redis_env}@redis:6379/0
+      ALLOW_DEVELOPMENT_AUTH_FALLBACK: "false"
+      ENVIRONMENT: production
+      REQUIRE_POSTGRES: "true"
+      TELEMETRY_ASYNC_PROCESSING: "true"
+      MAX_PAYLOAD_BYTES: "1048576"
+    command: >
+      sh -c "alembic upgrade head &&
+             uvicorn app.main:app --host 0.0.0.0 --port 8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  telemetry-worker:
+    build:
+      context: ./backend
+    environment:
+      DATABASE_URL: postgresql+asyncpg://trustpulse:${TRUSTPULSE_DB_PASSWORD:-change_me_in_env}@postgres:5432/trustpulse
+      REDIS_URL: redis://:${TRUSTPULSE_REDIS_PASSWORD:-change_me_redis_env}@redis:6379/0
+      ALLOW_DEVELOPMENT_AUTH_FALLBACK: "false"
+      ENVIRONMENT: production
+      REQUIRE_POSTGRES: "true"
+      TELEMETRY_ASYNC_PROCESSING: "true"
+    command: ["python", "-m", "app.workers.telemetry_worker_main"]
+    depends_on:
+      backend:
+        condition: service_started
+
+  # Reference mock ingestion server from Phase 1 (optionally kept for SDK dev tests)
   test-server:
     image: node:20-alpine
     working_dir: /app
@@ -11,35 +77,6 @@ services:
       - "8080:8080"
     command: node example/mock-server.js
 
-  # Placeholder for Phase 2: Production TrustPulse Telemetry Ingestion Gateway
-  # api-gateway:
-  #   build: ./backend
-  #   ports:
-  #     - "8000:8000"
-  #   environment:
-  #     - DATABASE_URL=postgres://trustpulse:secret@postgres:5432/trustpulse
-  #     - REDIS_URL=redis://redis:6379/0
-  #   depends_on:
-  #     - postgres
-  #     - redis
-
-  # Placeholder for Phase 2: Session Cache & Telemetry Queue
-  # redis:
-  #   image: redis:7-alpine
-  #   ports:
-  #     - "6379:6379"
-
-  # Placeholder for Phase 2: Long-term Behavioral Profile Storage
-  # postgres:
-  #   image: postgres:16-alpine
-  #   environment:
-  #     POSTGRES_USER: trustpulse
-  #     POSTGRES_PASSWORD: secret_change_in_prod
-  #     POSTGRES_DB: trustpulse
-  #   volumes:
-  #     - pgdata:/var/lib/postgresql/data
-  #   ports:
-  #     - "5432:5432"
-
-# volumes:
-#   pgdata:
+volumes:
+  pgdata:
+  redisdata:

@@ -1,15 +1,17 @@
 """
-TrustPulse AI - Risk and Security Decision Repository
+TrustPulse AI — Risk, Action Request and Security Decision Repository.
 """
 
-from typing import Optional, List, Dict, Any
-from datetime import datetime, timezone
+from datetime import datetime
+from typing import List, Optional
+
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-from app.models.risk_assessment import RiskAssessmentModel
+
 from app.models.action_request import ActionRequestModel
-from app.models.security_decision import SecurityDecisionModel
 from app.models.base import utc_now
+from app.models.risk_assessment import RiskAssessmentModel
+from app.models.security_decision import SecurityDecisionModel
 
 
 class RiskRepository:
@@ -80,6 +82,26 @@ class RiskRepository:
         await self.session.flush()
         return model
 
+    async def list_actions(
+        self, session_id: Optional[str] = None, limit: int = 100
+    ) -> List[ActionRequestModel]:
+        stmt = select(ActionRequestModel).where(
+            ActionRequestModel.customer_tenant_id == self.tenant_id
+        )
+        if session_id:
+            stmt = stmt.where(ActionRequestModel.session_id == session_id)
+        stmt = stmt.order_by(ActionRequestModel.created_at.desc()).limit(limit)
+        result = await self.session.execute(stmt)
+        return list(result.scalars().all())
+
+    async def get_action_by_id(self, action_id: str) -> Optional[ActionRequestModel]:
+        stmt = select(ActionRequestModel).where(
+            ActionRequestModel.action_id == action_id,
+            ActionRequestModel.customer_tenant_id == self.tenant_id,
+        )
+        result = await self.session.execute(stmt)
+        return result.scalars().first()
+
     async def record_decision(
         self,
         session_id: str,
@@ -114,6 +136,14 @@ class RiskRepository:
             )
             .order_by(SecurityDecisionModel.created_at.desc())
             .limit(1)
+        )
+        result = await self.session.execute(stmt)
+        return result.scalars().first()
+
+    async def get_decision_by_id(self, decision_id: str) -> Optional[SecurityDecisionModel]:
+        stmt = select(SecurityDecisionModel).where(
+            SecurityDecisionModel.decision_id == decision_id,
+            SecurityDecisionModel.customer_tenant_id == self.tenant_id,
         )
         result = await self.session.execute(stmt)
         return result.scalars().first()
