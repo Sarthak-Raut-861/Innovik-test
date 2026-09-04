@@ -1,15 +1,20 @@
 """
-TrustPulse AI - Risk Evaluation Schemas
+TrustPulse AI — Risk Evaluation Schemas.
 """
 
 from typing import List, Optional
+
 from pydantic import BaseModel, Field
-from app.schemas.action import ActionSchema, ActionRiskLevel
+
+from app.schemas.action import ActionRiskLevel, ActionSchema
 
 
 class RiskEvaluationRequest(BaseModel):
     session_id: str = Field(..., min_length=1, max_length=128)
     action: ActionSchema
+    request_id: Optional[str] = Field(
+        None, max_length=128, description="Optional client idempotency key"
+    )
 
 
 class RiskEvaluationResponse(BaseModel):
@@ -19,5 +24,7 @@ class RiskEvaluationResponse(BaseModel):
     action_risk: ActionRiskLevel
     reason_codes: List[str] = Field(default_factory=list)
     policy_version: str = "v1"
+    policy_rule_id: Optional[str] = None
     decision_id: Optional[str] = None
     evaluated_at: str
+    decision_expires_at: Optional[str] = None

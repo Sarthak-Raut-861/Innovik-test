@@ -2,7 +2,8 @@
 TrustPulse AI - Multi-Signal Fusion Engine
 """
 
-from typing import Dict, Any, List, Tuple
+from typing import Tuple
+
 from app.engines.risk.calibration import CalibrationConfig
 
 
@@ -15,9 +16,9 @@ class SignalFusionEngine:
 
     @staticmethod
     def fuse_signals(
-        behavior_signal: float,        # 0.0 (anomalous) to 1.0 (normal)
-        device_signal: float,          # 0.0 (mismatched) to 1.0 (consistent)
-        network_signal: float = 1.0,   # 0.0 (suspicious) to 1.0 (normal)
+        behavior_signal: float,  # 0.0 (anomalous) to 1.0 (normal)
+        device_signal: float,  # 0.0 (mismatched) to 1.0 (consistent)
+        network_signal: float = 1.0,  # 0.0 (suspicious) to 1.0 (normal)
         session_history_signal: float = 1.0,
     ) -> Tuple[int, str]:
         """

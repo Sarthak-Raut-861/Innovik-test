@@ -2,13 +2,14 @@
 TrustPulse AI - Incident Repository
 """
 
-from typing import Optional, List
-from datetime import datetime, timezone
+from typing import List, Optional
+
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.models.base import utc_now
 from app.models.incident import IncidentModel
 from app.repositories.base import BaseRepository
-from app.models.base import utc_now
 
 
 class IncidentRepository(BaseRepository[IncidentModel]):
@@ -43,7 +44,9 @@ class IncidentRepository(BaseRepository[IncidentModel]):
         await self.session.flush()
         return model
 
-    async def list_incidents(self, session_id: Optional[str] = None, limit: int = 50) -> List[IncidentModel]:
+    async def list_incidents(
+        self, session_id: Optional[str] = None, limit: int = 50
+    ) -> List[IncidentModel]:
         stmt = select(IncidentModel).where(IncidentModel.customer_tenant_id == self.tenant_id)
         if session_id:
             stmt = stmt.where(IncidentModel.session_id == session_id)
@@ -61,14 +64,10 @@ class IncidentRepository(BaseRepository[IncidentModel]):
 
     async def get_open_incidents(self, session_id: str) -> List[IncidentModel]:
         """Returns all unresolved incidents for a session."""
-        stmt = (
-            select(IncidentModel)
-            .where(
-                IncidentModel.customer_tenant_id == self.tenant_id,
-                IncidentModel.session_id == session_id,
-                IncidentModel.status == "OPEN",
-            )
+        stmt = select(IncidentModel).where(
+            IncidentModel.customer_tenant_id == self.tenant_id,
+            IncidentModel.session_id == session_id,
+            IncidentModel.status == "OPEN",
         )
         result = await self.session.execute(stmt)
         return list(result.scalars().all())
-

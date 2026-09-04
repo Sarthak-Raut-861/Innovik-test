@@ -1,9 +1,10 @@
 """
-TrustPulse AI - Incident Schemas
+TrustPulse AI — Incident Schemas.
 """
 
-from typing import Optional
 from datetime import datetime
+from typing import List, Optional
+
 from pydantic import BaseModel, Field
 
 
@@ -23,3 +24,9 @@ class IncidentResponse(BaseModel):
 
 class IncidentResolveRequest(BaseModel):
     resolution_notes: Optional[str] = Field(None, max_length=512)
+    status: Optional[str] = Field(None, max_length=32, description="RESOLVED or CLOSED")
+
+
+class IncidentListResponse(BaseModel):
+    items: List[IncidentResponse]
+    total: int

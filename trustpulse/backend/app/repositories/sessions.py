@@ -2,13 +2,15 @@
 TrustPulse AI - Session Repository
 """
 
+from datetime import datetime
 from typing import Optional
-from datetime import datetime, timezone
+
 from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.models.base import utc_now
 from app.models.session import SessionModel
 from app.repositories.base import BaseRepository
-from app.models.base import utc_now
 
 
 class SessionRepository(BaseRepository[SessionModel]):
@@ -61,6 +63,16 @@ class SessionRepository(BaseRepository[SessionModel]):
         sess = await self.get_by_session_id(session_id)
         if sess:
             sess.status = status
+            sess.last_seen_at = utc_now()
+            await self.session.flush()
+        return sess
+
+    async def bind_sdk_instance(
+        self, session_id: str, sdk_instance_id: str
+    ) -> Optional[SessionModel]:
+        sess = await self.get_by_session_id(session_id)
+        if sess:
+            sess.sdk_instance_id = sdk_instance_id
             sess.last_seen_at = utc_now()
             await self.session.flush()
         return sess

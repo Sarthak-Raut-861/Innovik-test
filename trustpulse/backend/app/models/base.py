@@ -5,9 +5,10 @@ TrustPulse AI - Declarative Base and Database Session Setup
 import uuid
 from datetime import datetime, timezone
 from typing import AsyncGenerator
-from sqlalchemy import String, DateTime
-from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
+
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
+from sqlalchemy.orm import DeclarativeBase
+
 from app.core.config import settings
 
 # Engine setup
@@ -36,6 +37,7 @@ async def get_db_session() -> AsyncGenerator[AsyncSession, None]:
 
 class Base(DeclarativeBase):
     """Base declarative class for all TrustPulse entities."""
+
     pass
 
 

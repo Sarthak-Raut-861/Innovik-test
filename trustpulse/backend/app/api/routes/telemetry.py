@@ -1,59 +1,92 @@
 """
-TrustPulse AI - Telemetry Ingestion API Routes
+TrustPulse AI — Telemetry Ingestion Routes.
+
+The @trustpulse/sdk posts a TelemetryBatch to POST /v1/telemetry. The route also
+accepts /v1/telemetry/batch for backward compatibility.
+
+Authentication: X-TrustPulse-Public-Key (non-secret SDK identification),
+binding the session and tenant server-side.
 """
 
-from fastapi import APIRouter, Depends, Header, Request, HTTPException
+from fastapi import APIRouter, Depends, Header, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.models.base import get_db_session
-from app.services.telemetry_service import TelemetryService
-from app.schemas.telemetry import TelemetryBatchSchema, TelemetryIngestionResponse
-from app.core.exceptions import (
-    TrustPulseException,
-    SessionNotFoundException,
-    RateLimitExceededException,
-)
+from app.api.dependencies import IntegrationContext, get_integration_context
 from app.core.config import settings
+from app.core.exceptions import (
+    RateLimitExceededException,
+    SecurityServiceUnavailableException,
+    TrustPulseException,
+)
+from app.models.base import get_db_session
+from app.schemas.telemetry import TelemetryBatchSchema, TelemetryIngestionResponse
+from app.services.telemetry_service import TelemetryService
 
 router = APIRouter(prefix="/telemetry", tags=["Telemetry"])
 
 
-def get_tenant_id(x_trustpulse_tenant_id: str = Header(..., alias="X-TrustPulse-Tenant-Id")) -> str:
-    return x_trustpulse_tenant_id
-
-
-@router.post("/batch", response_model=TelemetryIngestionResponse, status_code=202)
-async def ingest_telemetry_batch(
-    request: Request,
+async def _ingest(
     body: TelemetryBatchSchema,
-    tenant_id: str = Depends(get_tenant_id),
+    integration: IntegrationContext,
+    db: AsyncSession,
+    sdk_session_header: str | None,
+) -> TelemetryIngestionResponse:
+    try:
+        svc = TelemetryService(db, integration.tenant_id, integration)
+        result = await svc.ingest_batch(body, sdk_session_header=sdk_session_header)
+        await db.commit()
+        return result
+    except RateLimitExceededException as e:
+        await db.rollback()
+        raise HTTPException(status_code=429, detail=e.message) from None
+    except SecurityServiceUnavailableException as e:
+        await db.rollback()
+        raise HTTPException(status_code=503, detail=e.message) from None
+    except TrustPulseException as e:
+        await db.rollback()
+        raise HTTPException(status_code=e.status_code, detail=e.message) from None
+    except Exception:
+        await db.rollback()
+        raise HTTPException(status_code=500, detail="Telemetry ingestion failed") from None
+
+
+@router.post("", response_model=TelemetryIngestionResponse, status_code=202)
+async def ingest_telemetry(
+    body: TelemetryBatchSchema,
+    integration: IntegrationContext = Depends(get_integration_context),
     db: AsyncSession = Depends(get_db_session),
+    x_trustpulse_session_id: str | None = Header(default=None, alias="X-TrustPulse-Session-Id"),
 ):
     """
     Ingest a telemetry batch from the TrustPulse SDK.
 
-    Performs per-packet replay detection, clock-skew validation,
-    sequence monotonicity enforcement, integrity verification,
-    and DB persistence.
-    """
-    # Payload size guard
-    content_length = request.headers.get("content-length")
-    if content_length and int(content_length) > settings.MAX_PAYLOAD_BYTES:
-        raise HTTPException(status_code=413, detail="Payload too large")
+    Validation performed server-side:
+      * tenant/binding
+      * session existence and state
+      * schema version
+      * event ID uniqueness (replay protection)
+      * sequence monotonicity
+      * clock skew / freshness
+      * feature ranges and NaN/Infinity
+      * payload size / batch size limits
+      * integrity checksum advisory check
 
-    try:
-        svc = TelemetryService(db, tenant_id)
-        result = await svc.ingest_batch(body)
-        await db.commit()
-        return result
-    except RateLimitExceededException as e:
-        raise HTTPException(status_code=429, detail=e.message)
-    except SessionNotFoundException as e:
-        await db.rollback()
-        raise HTTPException(status_code=404, detail=e.message)
-    except TrustPulseException as e:
-        await db.rollback()
-        raise HTTPException(status_code=e.status_code, detail=e.message)
-    except Exception as e:
-        await db.rollback()
-        raise HTTPException(status_code=500, detail=str(e))
+    The SDK's client-side checksum is advisory only; a compromised browser can
+    forge it. No client-provided risk score is ever accepted.
+    """
+    if len(body.packets) > settings.MAX_BATCH_PACKETS:
+        raise HTTPException(status_code=422, detail="Batch contains too many packets") from None
+    return await _ingest(body, integration, db, x_trustpulse_session_id)
+
+
+@router.post("/batch", response_model=TelemetryIngestionResponse, status_code=202)
+async def ingest_telemetry_batch_alias(
+    body: TelemetryBatchSchema,
+    integration: IntegrationContext = Depends(get_integration_context),
+    db: AsyncSession = Depends(get_db_session),
+    x_trustpulse_session_id: str | None = Header(default=None, alias="X-TrustPulse-Session-Id"),
+):
+    """Backward-compatible alias for POST /v1/telemetry/batch."""
+    if len(body.packets) > settings.MAX_BATCH_PACKETS:
+        raise HTTPException(status_code=422, detail="Batch contains too many packets") from None
+    return await _ingest(body, integration, db, x_trustpulse_session_id)

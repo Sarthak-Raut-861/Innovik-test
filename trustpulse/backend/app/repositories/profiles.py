@@ -1,13 +1,15 @@
 """
-TrustPulse AI - Behavioral Profile Repository
+TrustPulse AI — Behavioral Profile Repository.
 """
 
-from typing import Optional, Dict, Any
+from typing import Any, Dict, Optional
+
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.models.base import utc_now
 from app.models.behavioral_profile import BehavioralProfileModel
 from app.repositories.base import BaseRepository
-from app.models.base import utc_now
 
 
 class ProfileRepository(BaseRepository[BehavioralProfileModel]):
@@ -36,9 +38,11 @@ class ProfileRepository(BaseRepository[BehavioralProfileModel]):
                 device_id=device_id,
                 feature_schema_version=schema_version,
                 trusted_baseline=None,
+                trusted_baseline_previous=None,
                 candidate_baseline=None,
                 baseline_version=1,
                 confidence=0.0,
+                observation_count=0,
                 created_at=utc_now(),
                 updated_at=utc_now(),
             )
@@ -50,17 +54,38 @@ class ProfileRepository(BaseRepository[BehavioralProfileModel]):
         self,
         profile: BehavioralProfileModel,
         trusted_baseline: Optional[Dict[str, Any]] = None,
+        trusted_baseline_previous: Optional[Dict[str, Any]] = None,
         candidate_baseline: Optional[Dict[str, Any]] = None,
         confidence: Optional[float] = None,
+        observation_count: Optional[int] = None,
+        preserve_previous: bool = True,
     ) -> BehavioralProfileModel:
         if trusted_baseline is not None:
+            if preserve_previous:
+                profile.trusted_baseline_previous = profile.trusted_baseline
             profile.trusted_baseline = trusted_baseline
             profile.baseline_version += 1
+        if trusted_baseline_previous is not None:
+            profile.trusted_baseline_previous = trusted_baseline_previous
         if candidate_baseline is not None:
             profile.candidate_baseline = candidate_baseline
         if confidence is not None:
             profile.confidence = confidence
+        if observation_count is not None:
+            profile.observation_count = observation_count
 
         profile.updated_at = utc_now()
         await self.session.flush()
         return profile
+
+    async def rollback_trusted_baseline(self, profile: BehavioralProfileModel) -> bool:
+        """Rolls back to the previous trusted baseline if one exists."""
+        if not profile.trusted_baseline_previous:
+            return False
+        current = profile.trusted_baseline
+        profile.trusted_baseline = profile.trusted_baseline_previous
+        profile.trusted_baseline_previous = current
+        profile.baseline_version = max(1, profile.baseline_version - 1)
+        profile.updated_at = utc_now()
+        await self.session.flush()
+        return True
