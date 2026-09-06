@@ -8,7 +8,7 @@ from typing import Any, Dict, Optional
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.api.dependencies import IntegrationContext
+from app.core.context import IntegrationContext
 from app.engines.action.action_risk import ActionRiskEngine
 from app.repositories.risks import RiskRepository
 

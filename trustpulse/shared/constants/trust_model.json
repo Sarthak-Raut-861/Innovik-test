@@ -1,0 +1,417 @@
+{
+  "schema_version": "1.0.0",
+  "description": "Single source of truth for TRUSTPULSE prototype trust parameters. Every value here is a PROTOTYPE parameter, overridable by environment configuration at runtime. TCI is an engineering trust index, NOT a literal probability.",
+  "tci": {
+    "scale_min": 0,
+    "scale_max": 100,
+    "weights": {
+      "identity": 0.15,
+      "device": 0.2,
+      "behavior": 0.3,
+      "network": 0.15,
+      "session": 0.1,
+      "history": 0.1
+    },
+    "cold_start_tci": 62,
+    "confidence_levels": {
+      "high_min_features": 8,
+      "medium_min_features": 4
+    }
+  },
+  "trust_states": {
+    "bands": [
+      {
+        "state": "TRUSTED",
+        "min": 85
+      },
+      {
+        "state": "DEGRADED",
+        "min": 70
+      },
+      {
+        "state": "SUSPICIOUS",
+        "min": 50
+      },
+      {
+        "state": "CRITICAL",
+        "min": 30
+      },
+      {
+        "state": "BLOCKED",
+        "min": 0
+      }
+    ],
+    "hysteresis": {
+      "escalation_confirmations": 2,
+      "decisive_drop": 15,
+      "decisive_depth": 10,
+      "multi_level_escalation": 2,
+      "recovery_buffer": 6,
+      "recovery_confirmations": 3,
+      "no_auto_recovery_states": [
+        "BLOCKED",
+        "CONTAINED"
+      ],
+      "no_recovery_with_open_incident": true
+    }
+  },
+  "identity_assurance": {
+    "method_scores": {
+      "PASSWORD": 55,
+      "PASSWORD_MFA": 90,
+      "SSO_SAML": 85,
+      "SSO_OIDC": 90,
+      "SSO_MFA": 96,
+      "API_KEY": 70,
+      "DEMO_SIMULATED": 60
+    },
+    "unknown_method_score": 40,
+    "age_decay_per_hour": 1.5,
+    "min_score": 15
+  },
+  "device_trust": {
+    "registered_known": 95,
+    "known_unregistered": 70,
+    "new_device": 35,
+    "flagged_device": 10,
+    "fingerprint_mismatch_penalty": 30,
+    "min_observations_for_trust": 5,
+    "observation_credit_per_session": 6
+  },
+  "behavior": {
+    "cold_start_score": 55,
+    "cold_start_with_shadow_score": 68,
+    "anomaly_weight": 1.0,
+    "drift_penalty_weight": 0.35,
+    "min_features_for_full_weight": 6,
+    "partial_evidence_floor": 0.4,
+    "shadow_max_promotion_distance": 1.2,
+    "shadow_promotion_min_observations": 8,
+    "trusted_core_alpha": 0.05,
+    "shadow_alpha": 0.25,
+    "baseline_established_score": 78,
+    "sustained_anomaly_penalty": 8,
+    "max_sustained_penalty": 40
+  },
+  "network": {
+    "same_network": 95,
+    "same_country_new_network": 65,
+    "new_country": 35,
+    "vpn_penalty": 20,
+    "tor_or_proxy_penalty": 45,
+    "no_context_score": 60
+  },
+  "session_context": {
+    "fresh_session_base": 90,
+    "max_telemetry_gap_seconds": 300,
+    "telemetry_gap_penalty": 25,
+    "prior_suspicion_penalty": 20,
+    "step_up_failure_penalty": 15,
+    "step_up_failure_penalty_max": 30,
+    "terminated_score": 0,
+    "contained_score": 0
+  },
+  "history": {
+    "neutral": 75,
+    "per_past_incident_penalty": 18,
+    "per_step_up_failure_penalty": 12,
+    "rolling_history_weight": 0.4,
+    "min_score": 5
+  },
+  "action_risk_profiles": {
+    "VIEW_DASHBOARD": {
+      "risk": 10,
+      "sensitivity": 0.1,
+      "privilege": 0.05,
+      "resource_exposure": 0.1,
+      "impact": 0.05,
+      "category": "READ"
+    },
+    "VIEW_PROFILE": {
+      "risk": 15,
+      "sensitivity": 0.2,
+      "privilege": 0.05,
+      "resource_exposure": 0.1,
+      "impact": 0.05,
+      "category": "READ"
+    },
+    "VIEW_RESOURCE": {
+      "risk": 20,
+      "sensitivity": 0.25,
+      "privilege": 0.1,
+      "resource_exposure": 0.2,
+      "impact": 0.05,
+      "category": "READ"
+    },
+    "CHANGE_PROFILE": {
+      "risk": 30,
+      "sensitivity": 0.3,
+      "privilege": 0.1,
+      "resource_exposure": 0.15,
+      "impact": 0.25,
+      "category": "WRITE"
+    },
+    "EXPORT_DATA": {
+      "risk": 60,
+      "sensitivity": 0.7,
+      "privilege": 0.3,
+      "resource_exposure": 0.8,
+      "impact": 0.5,
+      "category": "EXFILTRATION"
+    },
+    "CHANGE_PASSWORD": {
+      "risk": 85,
+      "sensitivity": 0.8,
+      "privilege": 0.6,
+      "resource_exposure": 0.2,
+      "impact": 0.9,
+      "category": "CREDENTIAL"
+    },
+    "CREATE_API_KEY": {
+      "risk": 90,
+      "sensitivity": 0.85,
+      "privilege": 0.7,
+      "resource_exposure": 0.7,
+      "impact": 0.9,
+      "category": "CREDENTIAL"
+    },
+    "DELETE_RESOURCE": {
+      "risk": 95,
+      "sensitivity": 0.7,
+      "privilege": 0.6,
+      "resource_exposure": 0.6,
+      "impact": 1.0,
+      "category": "DESTRUCTIVE"
+    },
+    "CHANGE_SECURITY_SETTINGS": {
+      "risk": 95,
+      "sensitivity": 0.9,
+      "privilege": 0.8,
+      "resource_exposure": 0.4,
+      "impact": 1.0,
+      "category": "SECURITY_CONFIG"
+    },
+    "MODIFY_ACCESS_POLICY": {
+      "risk": 97,
+      "sensitivity": 0.9,
+      "privilege": 0.95,
+      "resource_exposure": 0.7,
+      "impact": 1.0,
+      "category": "AUTHORIZATION"
+    },
+    "CREATE_ADMIN": {
+      "risk": 98,
+      "sensitivity": 0.95,
+      "privilege": 1.0,
+      "resource_exposure": 0.8,
+      "impact": 1.0,
+      "category": "PRIVILEGE_ESCALATION"
+    }
+  },
+  "action_risk": {
+    "default_risk": 50,
+    "weights": {
+      "sensitivity": 0.3,
+      "privilege": 0.25,
+      "resource_exposure": 0.2,
+      "impact": 0.25
+    },
+    "amount_escalation": {
+      "high_amount": 25000,
+      "critical_amount": 100000,
+      "high_amount_risk": 80,
+      "critical_amount_risk": 98
+    },
+    "privilege_escalation_bonus": 8,
+    "production_resource_bonus": 6,
+    "max_risk": 100
+  },
+  "evidence_types": [
+    "BEHAVIOR_DEVIATION",
+    "DEVICE_CHANGE",
+    "NETWORK_CHANGE",
+    "SESSION_ANOMALY",
+    "UNUSUAL_ACTION",
+    "BASELINE_DEVIATION",
+    "PRIVILEGE_ESCALATION",
+    "IDENTITY_ASSURANCE_DROP",
+    "HISTORY_RISK",
+    "COLD_START",
+    "TELEMETRY_GAP",
+    "STATE_CHANGE"
+  ],
+  "authorization": {
+    "policy_version": "1.0.0",
+    "description": "Authorization policy. Rules are evaluated IN ORDER and the first match wins. This is deterministic data, not model output: the AI layer never appears here. Only the server-side Policy Enforcement Point may produce a decision.",
+    "default_decision": "ALLOW",
+    "terminal_trust_states": [
+      "BLOCKED",
+      "CONTAINED"
+    ],
+    "tci_block_floor": 45,
+    "tci_block_floor_min_risk": 30,
+    "rules": [
+      {
+        "id": "SESSION_NOT_ACTIVE",
+        "decision": "BLOCK",
+        "requires": {
+          "session_status_not": "ACTIVE"
+        },
+        "reason": "Session is not active"
+      },
+      {
+        "id": "SESSION_CONTAINED",
+        "decision": "BLOCK",
+        "requires": {
+          "contained": true
+        },
+        "reason": "Session is contained"
+      },
+      {
+        "id": "TERMINAL_TRUST_STATE",
+        "decision": "BLOCK",
+        "requires": {
+          "trust_state_in": [
+            "BLOCKED",
+            "CONTAINED"
+          ]
+        },
+        "reason": "Session is in a terminal trust state"
+      },
+      {
+        "id": "TCI_FLOOR_EXCEEDED",
+        "decision": "BLOCK",
+        "requires": {
+          "max_tci": 45,
+          "min_action_risk": 30
+        },
+        "reason": "Trust index is below the authorization floor for this action risk"
+      },
+      {
+        "id": "CRITICAL_STATE_HIGH_RISK",
+        "decision": "BLOCK",
+        "requires": {
+          "trust_state_in": [
+            "CRITICAL"
+          ],
+          "min_action_risk": 60
+        },
+        "reason": "Critical session trust with a high-risk action"
+      },
+      {
+        "id": "CRITICAL_STATE_MEDIUM_RISK",
+        "decision": "STEP_UP",
+        "requires": {
+          "trust_state_in": [
+            "CRITICAL"
+          ],
+          "min_action_risk": 30
+        },
+        "reason": "Critical session trust requires re-authentication"
+      },
+      {
+        "id": "SUSPICIOUS_STATE_HIGH_RISK",
+        "decision": "STEP_UP",
+        "requires": {
+          "trust_state_in": [
+            "SUSPICIOUS"
+          ],
+          "min_action_risk": 60
+        },
+        "reason": "Suspicious session trust requires step-up for a high-risk action"
+      },
+      {
+        "id": "SUSPICIOUS_STATE_MEDIUM_RISK",
+        "decision": "STEP_UP",
+        "requires": {
+          "trust_state_in": [
+            "SUSPICIOUS"
+          ],
+          "min_action_risk": 30
+        },
+        "reason": "Suspicious session trust requires step-up for a medium-risk action"
+      },
+      {
+        "id": "DEGRADED_STATE_CRITICAL_RISK",
+        "decision": "STEP_UP",
+        "requires": {
+          "trust_state_in": [
+            "DEGRADED"
+          ],
+          "min_action_risk": 85
+        },
+        "reason": "Degraded session trust requires step-up for a critical-risk action"
+      },
+      {
+        "id": "HEALTHY_STATE_VERY_HIGH_RISK",
+        "decision": "STEP_UP",
+        "requires": {
+          "trust_state_in": [
+            "TRUSTED",
+            "DEGRADED"
+          ],
+          "min_action_risk": 95
+        },
+        "reason": "Very high-risk action requires explicit confirmation"
+      },
+      {
+        "id": "DEFAULT_ALLOW",
+        "decision": "ALLOW",
+        "requires": {},
+        "reason": "Action risk is acceptable for the current trust state"
+      }
+    ],
+    "step_up": {
+      "methods": [
+        "PASSWORD",
+        "MFA",
+        "SSO_MFA",
+        "SECURITY_KEY"
+      ],
+      "default_method": "MFA",
+      "challenge_ttl_seconds": 300,
+      "max_attempts": 3,
+      "failure_tci_penalty": 15,
+      "failure_severity": 0.75,
+      "block_on_failure_min_risk": 60,
+      "contain_on_failure_min_risk": 85,
+      "success_severity": 0.2
+    },
+    "receipts": {
+      "ttl_seconds": 90,
+      "max_ttl_seconds": 900,
+      "nonce_bytes": 16,
+      "hash_algorithm": "sha256",
+      "bind": [
+        "user_id",
+        "device_id",
+        "session_id",
+        "action",
+        "resource",
+        "nonce"
+      ],
+      "single_use": true,
+      "evidence_hash_algorithm": "sha256"
+    },
+    "containment": {
+      "auto_contain_states": [
+        "BLOCKED"
+      ],
+      "auto_contain_min_risk": 85,
+      "actions": [
+        "REVOKE_SESSION",
+        "INVALIDATE_TOKEN",
+        "FLAG_DEVICE",
+        "OPEN_INCIDENT",
+        "SERVE_DECEPTION"
+      ],
+      "flag_device": true,
+      "device_flag_reason": "SESSION_CONTAINED",
+      "deception": {
+        "enabled": true,
+        "label": "DECEPTION_SANDBOX",
+        "notice": "This session is contained. Responses are simulated and contain no real data. Activity is recorded for investigation."
+      }
+    }
+  }
+}

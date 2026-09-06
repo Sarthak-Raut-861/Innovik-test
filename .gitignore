@@ -27,6 +27,12 @@ dist/
 build/
 target/
 
+# Node / frontend
+node_modules/
+frontend/dist/
+frontend/.vite/
+npm-debug.log*
+
 # IDE
 .idea/
 .vscode/

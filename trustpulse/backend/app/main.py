@@ -5,14 +5,16 @@ TrustPulse AI — FastAPI Application Entry Point.
 import time
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI, Request
+from fastapi import APIRouter, FastAPI, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from fastapi.openapi.utils import get_openapi
 from fastapi.responses import JSONResponse
+from trustpulse_ml.feature_extraction.features import RawDataRejectedError
 
 from app.api import api_router
+from app.api.routes import platform_authorization, platform_soc, platform_trust
 from app.core.config import settings
 from app.core.exceptions import TrustPulseException
 from app.core.logging import logger, setup_logging
@@ -148,6 +150,23 @@ async def trustpulse_exception_handler(request: Request, exc: TrustPulseExceptio
     )
 
 
+@app.exception_handler(RawDataRejectedError)
+async def raw_data_rejected_handler(request: Request, exc: RawDataRejectedError):
+    """Privacy guard: telemetry carrying raw data is rejected, never stored."""
+    logger.warning("Rejected telemetry containing raw data: %s", exc)
+    metrics.incr("telemetry_raw_data_rejected")
+    return JSONResponse(
+        status_code=422,
+        content={
+            "error": "Raw behavioral data is not accepted",
+            "details": {
+                "reason": str(exc),
+                "policy": "TRUSTPULSE only accepts derived aggregate features.",
+            },
+        },
+    )
+
+
 @app.exception_handler(Exception)
 async def global_exception_handler(request: Request, exc: Exception):
     logger.error(f"Unhandled exception: {exc}", exc_info=True)
@@ -158,6 +177,14 @@ async def global_exception_handler(request: Request, exc: Exception):
 
 
 app.include_router(api_router, prefix=settings.API_V1_STR)
+
+# TRUSTPULSE platform API (sessions, telemetry, trust, SOC). Kept on its own
+# prefix so the SDK-facing /v1 contract is unaffected.
+platform_router = APIRouter()
+platform_router.include_router(platform_trust.router)
+platform_router.include_router(platform_soc.router)
+platform_router.include_router(platform_authorization.router)
+app.include_router(platform_router, prefix=settings.PLATFORM_API_PREFIX)
 
 
 def custom_openapi():

@@ -1,18 +1,28 @@
-version: "3.9"
+# TRUSTPULSE AI — full local stack.
+#
+#   cp .env.example .env && docker compose up --build
+#   docker compose run --rm backend python scripts/seed_demo.py
+#
+# Frontend: http://localhost:5173   API: http://localhost:8000/docs
+#
+# Build contexts are the repository root (`.`) because the backend image needs
+# `ml/` and `shared/`, and the frontend image reads `shared/`.
+
+name: trustpulse
 
 services:
   postgres:
     image: postgres:16-alpine
     environment:
-      POSTGRES_USER: trustpulse
+      POSTGRES_USER: ${TRUSTPULSE_DB_USER:-trustpulse}
       POSTGRES_PASSWORD: ${TRUSTPULSE_DB_PASSWORD:-change_me_in_env}
-      POSTGRES_DB: trustpulse
+      POSTGRES_DB: ${TRUSTPULSE_DB_NAME:-trustpulse}
     ports:
-      - "5432:5432"
+      - "${TRUSTPULSE_DB_PORT:-5432}:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U trustpulse -d trustpulse"]
+      test: ["CMD-SHELL", "pg_isready -U ${TRUSTPULSE_DB_USER:-trustpulse} -d ${TRUSTPULSE_DB_NAME:-trustpulse}"]
       interval: 5s
       timeout: 5s
       retries: 10
@@ -21,25 +31,32 @@ services:
     image: redis:7-alpine
     command: ["redis-server", "--requirepass", "${TRUSTPULSE_REDIS_PASSWORD:-change_me_redis_env}", "--appendonly", "yes"]
     ports:
-      - "6379:6379"
+      - "${TRUSTPULSE_REDIS_PORT:-6379}:6379"
     volumes:
       - redisdata:/data
     healthcheck:
-      test: ["CMD", "redis-cli", "-a", "${TRUSTPULSE_REDIS_PASSWORD:-change_me_redis_env}", "ping"]
+      test: ["CMD-SHELL", "redis-cli -a $${TRUSTPULSE_REDIS_PASSWORD:-change_me_redis_env} ping | grep PONG"]
       interval: 5s
       timeout: 5s
       retries: 10
+    environment:
+      TRUSTPULSE_REDIS_PASSWORD: ${TRUSTPULSE_REDIS_PASSWORD:-change_me_redis_env}
 
   backend:
     build:
-      context: ./backend
+      context: .
+      dockerfile: backend/Dockerfile
     ports:
-      - "8000:8000"
+      - "${TRUSTPULSE_API_PORT:-8000}:8000"
+    env_file:
+      - path: .env
+        required: false
     environment:
-      DATABASE_URL: postgresql+asyncpg://trustpulse:${TRUSTPULSE_DB_PASSWORD:-change_me_in_env}@postgres:5432/trustpulse
+      DATABASE_URL: postgresql+asyncpg://${TRUSTPULSE_DB_USER:-trustpulse}:${TRUSTPULSE_DB_PASSWORD:-change_me_in_env}@postgres:5432/${TRUSTPULSE_DB_NAME:-trustpulse}
       REDIS_URL: redis://:${TRUSTPULSE_REDIS_PASSWORD:-change_me_redis_env}@redis:6379/0
+      SHARED_DIR: /app/shared
       ALLOW_DEVELOPMENT_AUTH_FALLBACK: "false"
-      ENVIRONMENT: production
+      ENVIRONMENT: ${TRUSTPULSE_ENVIRONMENT:-production}
       REQUIRE_POSTGRES: "true"
       TELEMETRY_ASYNC_PROCESSING: "true"
       MAX_PAYLOAD_BYTES: "1048576"
@@ -54,12 +71,17 @@ services:
 
   telemetry-worker:
     build:
-      context: ./backend
+      context: .
+      dockerfile: backend/Dockerfile
+    env_file:
+      - path: .env
+        required: false
     environment:
-      DATABASE_URL: postgresql+asyncpg://trustpulse:${TRUSTPULSE_DB_PASSWORD:-change_me_in_env}@postgres:5432/trustpulse
+      DATABASE_URL: postgresql+asyncpg://${TRUSTPULSE_DB_USER:-trustpulse}:${TRUSTPULSE_DB_PASSWORD:-change_me_in_env}@postgres:5432/${TRUSTPULSE_DB_NAME:-trustpulse}
       REDIS_URL: redis://:${TRUSTPULSE_REDIS_PASSWORD:-change_me_redis_env}@redis:6379/0
+      SHARED_DIR: /app/shared
       ALLOW_DEVELOPMENT_AUTH_FALLBACK: "false"
-      ENVIRONMENT: production
+      ENVIRONMENT: ${TRUSTPULSE_ENVIRONMENT:-production}
       REQUIRE_POSTGRES: "true"
       TELEMETRY_ASYNC_PROCESSING: "true"
     command: ["python", "-m", "app.workers.telemetry_worker_main"]
@@ -67,15 +89,38 @@ services:
       backend:
         condition: service_started
 
-  # Reference mock ingestion server from Phase 1 (optionally kept for SDK dev tests)
-  test-server:
-    image: node:20-alpine
-    working_dir: /app
-    volumes:
-      - .:/app
+  frontend:
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+      args:
+        # Demo only: a real integration keeps the key server-side.
+        VITE_TRUSTPULSE_API_KEY: ${TRUSTPULSE_DEMO_API_KEY:-tp_demo_trustpulse_key_0001}
+        VITE_TRUSTPULSE_TENANT: ${TRUSTPULSE_DEMO_TENANT:-trustdev-demo}
     ports:
-      - "8080:8080"
-    command: node example/mock-server.js
+      - "${TRUSTPULSE_WEB_PORT:-5173}:80"
+    depends_on:
+      - backend
+
+  # Seeds demo data (personas, devices, baselines, TrustDev integration).
+  # Not started by `up`; run it explicitly:
+  #   docker compose run --rm seed
+  seed:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    profiles: ["tools"]
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      DATABASE_URL: postgresql+asyncpg://${TRUSTPULSE_DB_USER:-trustpulse}:${TRUSTPULSE_DB_PASSWORD:-change_me_in_env}@postgres:5432/${TRUSTPULSE_DB_NAME:-trustpulse}
+      REDIS_URL: redis://:${TRUSTPULSE_REDIS_PASSWORD:-change_me_redis_env}@redis:6379/0
+      SHARED_DIR: /app/shared
+    command: ["python", "scripts/seed_demo.py", "--baseline-observations", "20"]
+    depends_on:
+      backend:
+        condition: service_started
 
 volumes:
   pgdata:

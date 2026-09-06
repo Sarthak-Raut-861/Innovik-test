@@ -1,37 +1,44 @@
-# TrustPulse AI
+# Innovik-test
 
-Continuous session-security platform.
+This repository contains **TRUSTPULSE AI — Evidence-Centric Continuous Digital Trust Platform**.
 
-- **Phase 1 — Web SDK**: `trustpulse/sdk` (`@trustpulse/sdk`)
-  privacy-safe behavioral telemetry collectors, feature extraction, session
-  management, replay/sequence protection, bounded queue, HTTPS transport.
-- **Phase 2 — Security Backend**: `trustpulse/backend`
-  tenant-scoped FastAPI backend with PostgreSQL, Redis, telemetry validation,
-  behavioral baselines, session confidence, action risk, deterministic policy
-  decisions, incidents, audit, and testing.
+> Authenticate once. Trust continuously. Authorize every sensitive action. Prove why.
 
-## Quick links
+**All documentation and code live under [`trustpulse/`](trustpulse/).**
 
-- Phase 2 report: [`trustpulse/docs/PHASE2_REPORT.md`](trustpulse/docs/PHASE2_REPORT.md)
-- Phase 2 API docs: `/docs` when running the backend
-- Phase 1 SDK docs: [`trustpulse/sdk/README.md`](trustpulse/sdk/README.md)
-- Architecture: [`trustpulse/docs/ARCHITECTURE.md`](trustpulse/docs/ARCHITECTURE.md)
-- Security model: [`trustpulse/docs/SECURITY_MODEL.md`](trustpulse/docs/SECURITY_MODEL.md)
+→ **[Read the main README](trustpulse/README.md)** — quick start, architecture, trust model,
+privacy rules, verification.
 
-## Run Phase 2 locally
+| Document | Contents |
+|---|---|
+| [`trustpulse/README.md`](trustpulse/README.md) | Overview, quick start, repository layout, limitations |
+| [`trustpulse/docs/ARCHITECTURE.md`](trustpulse/docs/ARCHITECTURE.md) | Layering, trust computation, baselines, privacy, deployment |
+| [`trustpulse/docs/API_REFERENCE.md`](trustpulse/docs/API_REFERENCE.md) | Endpoints, request/response shapes, shared contracts |
+| [`trustpulse/docs/SECURITY_MODEL.md`](trustpulse/docs/SECURITY_MODEL.md) | Security posture and enforcement rules |
+| [`trustpulse/docs/PHASE1_REPORT.md`](trustpulse/docs/PHASE1_REPORT.md) | What Phase 1 delivered, with verification evidence |
 
-```bash
-cd trustpulse/backend
-python -m venv .venv
-. .venv/bin/activate
-pip install -r requirements.txt
-uvicorn app.main:app --host 0.0.0.0 --port 8000
-```
+## Phase status
 
-## Run Phase 2 with Docker
+| Phase | Scope | Status |
+|---|---|---|
+| **1** | Shared trust model, ML core, data model, trust engine, SOC dashboard, SDK, demo data | ✅ complete |
+| **2** | Action risk, policy engine, PEP enforcement, step-up, revocation, containment, incidents, Trust Receipts | ⏳ next |
+| **3** | Receipt proofs, Merkle anchoring, verification UI, WebSockets, TrustDev integration, attack demo | ⏳ planned |
+
+## Fastest path to a running system
 
 ```bash
 cd trustpulse
-TRUSTPULSE_DB_PASSWORD=dev_db_pw TRUSTPULSE_REDIS_PASSWORD=dev_redis_pw \
-  docker compose up --build
+cp .env.example .env        # then change the passwords
+docker compose up --build
+docker compose run --rm --profile tools seed
 ```
+
+- SOC dashboard: http://localhost:5173
+- API docs: http://localhost:8000/docs
+
+Without Docker (Python 3.11+, Node 20+), see the
+[no-Docker instructions](trustpulse/README.md#without-docker-needs-python-311-and-node-20).
+
+Note: [`trustpulse/docs/PHASE2_REPORT.md`](trustpulse/docs/PHASE2_REPORT.md) predates the current
+phase plan and uses different numbering. The table above governs.

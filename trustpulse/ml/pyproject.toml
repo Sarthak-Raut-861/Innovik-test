@@ -1,0 +1,40 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "trustpulse-ml"
+version = "1.0.0"
+description = "TRUSTPULSE ML toolkit: feature extraction, trusted-core/shadow baselines, anomaly detection, trust fusion, evaluation."
+requires-python = ">=3.11"
+dependencies = [
+    "numpy>=1.26",
+    "pandas>=2.1",
+    "scikit-learn>=1.4",
+]
+
+# The on-disk tree keeps the documented layout (ml/feature_extraction, ml/baseline, ...).
+# It is exposed to Python under the importable package name `trustpulse_ml` so that it
+# never collides with unrelated top-level names in site-packages.
+# The package list MUST be explicit: `packages.find` would discover the sub-directories
+# as top-level names (feature_extraction, baseline, ...) and ignore package-dir.
+[tool.setuptools]
+package-dir = { "trustpulse_ml" = "." }
+packages = [
+    "trustpulse_ml",
+    "trustpulse_ml.feature_extraction",
+    "trustpulse_ml.baseline",
+    "trustpulse_ml.anomaly_detection",
+    "trustpulse_ml.trust_fusion",
+    "trustpulse_ml.evaluation",
+]
+
+# Match the backend lint configuration so `ruff check` behaves the same from any
+# working directory in the monorepo.
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B"]
+ignore = ["B008"]

@@ -10,7 +10,7 @@ from typing import List, Optional
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.api.dependencies import IntegrationContext
+from app.core.context import IntegrationContext
 from app.models.incident import IncidentModel
 from app.repositories.incidents import IncidentRepository
 from app.services.audit_service import AuditService

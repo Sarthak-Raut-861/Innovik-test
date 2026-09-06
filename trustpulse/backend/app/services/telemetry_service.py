@@ -15,8 +15,8 @@ from typing import List, Optional
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.api.dependencies import IntegrationContext
 from app.core.config import settings
+from app.core.context import IntegrationContext
 from app.core.exceptions import (
     RateLimitExceededException,
     ReplayDetectedException,

@@ -14,36 +14,19 @@ Development fallback (tenant header only) is enabled by default for local
 testing but MUST be disabled in production.
 """
 
-from dataclasses import dataclass, field
 from typing import Optional
 
 from fastapi import Depends, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
+from app.core.context import IntegrationContext  # re-exported for compatibility
 from app.core.exceptions import AuthenticationException, TenantMismatchException
 from app.core.security import SecurityUtils
 from app.models.base import get_db_session
 from app.repositories.integrations import IntegrationRepository
 
-
-@dataclass
-class IntegrationContext:
-    tenant_id: str
-    actor_type: str  # "API_CLIENT" or "BROWSER_SDK" or "DEVELOPMENT"
-    actor_id: str
-    public_key: Optional[str] = None
-    integration_name: Optional[str] = None
-    api_key_hint: Optional[str] = None
-    scopes: set[str] = field(default_factory=lambda: {"read", "write", "telemetry", "risk"})
-
-    def to_audit_metadata(self) -> dict:
-        return {
-            "integration_name": self.integration_name,
-            "public_key_hint": (self.public_key or "")[:8] if self.public_key else None,
-            "api_key_hint": self.api_key_hint,
-            "scopes": sorted(self.scopes),
-        }
+__all__ = ["IntegrationContext", "get_integration_context"]
 
 
 def _extract_bearer_key(request: Request) -> Optional[str]:

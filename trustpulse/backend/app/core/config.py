@@ -22,6 +22,8 @@ class Settings(BaseSettings):
     PROJECT_NAME: str = "TrustPulse AI Security Backend"
     VERSION: str = "2.0.0"
     API_V1_STR: str = "/v1"
+    # TRUSTPULSE platform API (trust, sessions, SOC). See docs/API_REFERENCE.md.
+    PLATFORM_API_PREFIX: str = "/api/v1"
     ENVIRONMENT: str = "development"
     DEBUG: bool = False
 

@@ -1,0 +1,207 @@
+{
+  "schema_version": "1.0.0",
+  "description": "Demo personas for TRUSTPULSE. Feature values are DERIVED AGGREGATES ONLY (means, standard deviations, rates). No raw events, no typed characters. The attacker profile exists so the demo can reproduce a takeover without a real attacker.",
+  "personas": {
+    "alice.chen": {
+      "typing": {
+        "meanDwellTime": 112,
+        "dwellStdDev": 24,
+        "meanFlightTime": 88,
+        "flightStdDev": 31,
+        "typingSpeed": 6.1,
+        "pauseRate": 0.12
+      },
+      "mouse": {
+        "meanVelocity": 820,
+        "velocityStdDev": 260,
+        "meanAcceleration": 2100,
+        "directionChangeRate": 3.4,
+        "totalDistance": 18400,
+        "movementDuration": 4200,
+        "meanPauseTime": 340
+      },
+      "click": {
+        "clickCount": 18,
+        "meanInterval": 940,
+        "intervalStdDev": 310,
+        "clickFrequency": 1.1
+      },
+      "scroll": {
+        "meanVelocity": 1500,
+        "totalDistance": 9200,
+        "meanPauseDuration": 620,
+        "eventRate": 6.2
+      }
+    },
+    "marcus.reed": {
+      "typing": {
+        "meanDwellTime": 96,
+        "dwellStdDev": 19,
+        "meanFlightTime": 74,
+        "flightStdDev": 26,
+        "typingSpeed": 7.4,
+        "pauseRate": 0.08
+      },
+      "mouse": {
+        "meanVelocity": 1180,
+        "velocityStdDev": 410,
+        "meanAcceleration": 3300,
+        "directionChangeRate": 4.6,
+        "totalDistance": 24500,
+        "movementDuration": 3600,
+        "meanPauseTime": 260
+      },
+      "click": {
+        "clickCount": 26,
+        "meanInterval": 640,
+        "intervalStdDev": 210,
+        "clickFrequency": 1.6
+      },
+      "scroll": {
+        "meanVelocity": 2200,
+        "totalDistance": 14800,
+        "meanPauseDuration": 410,
+        "eventRate": 9.4
+      }
+    },
+    "priya.nair": {
+      "typing": {
+        "meanDwellTime": 128,
+        "dwellStdDev": 28,
+        "meanFlightTime": 102,
+        "flightStdDev": 35,
+        "typingSpeed": 5.3,
+        "pauseRate": 0.17
+      },
+      "mouse": {
+        "meanVelocity": 640,
+        "velocityStdDev": 190,
+        "meanAcceleration": 1600,
+        "directionChangeRate": 2.6,
+        "totalDistance": 13200,
+        "movementDuration": 5100,
+        "meanPauseTime": 470
+      },
+      "click": {
+        "clickCount": 14,
+        "meanInterval": 1250,
+        "intervalStdDev": 420,
+        "clickFrequency": 0.8
+      },
+      "scroll": {
+        "meanVelocity": 1100,
+        "totalDistance": 7400,
+        "meanPauseDuration": 820,
+        "eventRate": 4.4
+      }
+    }
+  },
+  "attacker_profile": {
+    "description": "Session-takeover simulation: automated, fast, uniform interaction. Used only by the demo simulator.",
+    "typing": {
+      "meanDwellTime": 380,
+      "dwellStdDev": 12,
+      "meanFlightTime": 300,
+      "flightStdDev": 9,
+      "typingSpeed": 2.1,
+      "pauseRate": 0.02
+    },
+    "mouse": {
+      "meanVelocity": 9000,
+      "velocityStdDev": 60,
+      "meanAcceleration": 41000,
+      "directionChangeRate": 0.4,
+      "totalDistance": 92000,
+      "movementDuration": 900,
+      "meanPauseTime": 40
+    },
+    "click": {
+      "clickCount": 64,
+      "meanInterval": 155,
+      "intervalStdDev": 12,
+      "clickFrequency": 6.4
+    },
+    "scroll": {
+      "meanVelocity": 18000,
+      "totalDistance": 240000,
+      "meanPauseDuration": 30,
+      "eventRate": 42.0
+    }
+  },
+  "users": [
+    {
+      "external_user_id": "U001",
+      "username": "alice.chen",
+      "display_name": "Alice Chen",
+      "role": "ADMIN",
+      "department": "Platform Engineering",
+      "mfa_enabled": true,
+      "default_auth_method": "PASSWORD",
+      "demo_password": "TrustDemo!234",
+      "device": {
+        "fingerprint": "dev-alice-work-macbook-a1b2c3",
+        "label": "alice-work-macbook",
+        "platform": "macOS",
+        "browser": "Chrome",
+        "os_name": "macOS 14",
+        "screen": "2560x1600",
+        "timezone": "America/New_York",
+        "registered": true,
+        "observations": 42
+      }
+    },
+    {
+      "external_user_id": "U002",
+      "username": "marcus.reed",
+      "display_name": "Marcus Reed",
+      "role": "DEVELOPER",
+      "department": "Backend",
+      "mfa_enabled": false,
+      "default_auth_method": "PASSWORD",
+      "demo_password": "TrustDemo!234",
+      "device": {
+        "fingerprint": "dev-marcus-thinkpad-x1-d4e5f6",
+        "label": "marcus-thinkpad",
+        "platform": "Windows",
+        "browser": "Edge",
+        "os_name": "Windows 11",
+        "screen": "1920x1080",
+        "timezone": "Europe/London",
+        "registered": false,
+        "observations": 17
+      }
+    },
+    {
+      "external_user_id": "U003",
+      "username": "priya.nair",
+      "display_name": "Priya Nair",
+      "role": "SOC_ANALYST",
+      "department": "Security Operations",
+      "mfa_enabled": true,
+      "default_auth_method": "PASSWORD",
+      "demo_password": "TrustDemo!234",
+      "device": {
+        "fingerprint": "dev-priya-soc-desktop-g7h8i9",
+        "label": "priya-soc-desktop",
+        "platform": "Linux",
+        "browser": "Firefox",
+        "os_name": "Ubuntu 24.04",
+        "screen": "3440x1440",
+        "timezone": "Asia/Kolkata",
+        "registered": true,
+        "observations": 63
+      }
+    }
+  ],
+  "attacker_device": {
+    "fingerprint": "dev-unknown-vps-headless-z9y8x7",
+    "label": "unknown-headless-vps",
+    "platform": "Linux",
+    "browser": "HeadlessChrome",
+    "os_name": "Linux",
+    "screen": "1366x768",
+    "timezone": "UTC",
+    "registered": false,
+    "observations": 0
+  }
+}
